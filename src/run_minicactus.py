@@ -36,7 +36,7 @@ class CactusRunner:
         cactus jobStore will use the new directory which created by generate_cactus_dir
         :return: cmd
         """
-        cactus_dir = self.generate_cactus_dir().resolve()
+        cactus_dir = self.generate_cactus_dir()
         cactus_dir.mkdir(parents=True, exist_ok=True)
         cactus_job_store = cactus_dir / "jobStore"
         cmd = [
