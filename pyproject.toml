@@ -1,0 +1,6 @@
+[project]
+name = "graphpangenomepipeline"
+version = "1.0.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = []
