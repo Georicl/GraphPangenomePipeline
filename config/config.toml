@@ -1,10 +1,17 @@
 # basic path config
-[path]
+[Paths]
+work_dir = "./work"
 
-
+# ---Cactus Config---
 # cactus path config
-[cactus]
+[Cactus]
+seqFile = "./seqfile"
+reference = ""
+outName = ""
+maxCores = 24
 
-
-# output control
-[output_format]
+# cactus output control
+[CactusOutFormat]
+vcf = true
+gfa = true
+gbz = true
