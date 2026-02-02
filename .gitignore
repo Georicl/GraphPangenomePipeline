@@ -1,6 +1,7 @@
 .idea
 .vscode
 .git
+.gemini
 .DS_Store
 .env
 .env.local

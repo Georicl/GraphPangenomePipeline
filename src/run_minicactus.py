@@ -13,11 +13,10 @@ class CactusRunner:
     def __init__(self, config_path: str):
         with open(config_path, "rb") as f:
             self.config = tomllib.load(f)
-
         # config include seqFile path and jobStore path
         self.Cactus: dict = self.config['Cactus']
         # work directory path
-        self.Paths: dict = self.config['Paths']
+        self.Global: dict = self.config['Global']
         # set cactus output file format
         self.CactusOutFormat:  dict = self.config['CactusOutFormat']
 
@@ -26,7 +25,7 @@ class CactusRunner:
         create cactus work dir path
         :return: cactus_path
         """
-        work_dir = Path(self.Paths['work_dir']).resolve()
+        work_dir = Path(self.Global['work_dir']).resolve()
         cactus_dir = work_dir / "1. cactus"
 
         return cactus_dir
@@ -37,7 +36,7 @@ class CactusRunner:
         cactus jobStore will use the new directory which created by generate_cactus_dir
         :return: cmd
         """
-        cactus_dir = self.generate_cactus_dir()
+        cactus_dir = self.generate_cactus_dir().resolve()
         cactus_dir.mkdir(parents=True, exist_ok=True)
         cactus_job_store = cactus_dir / "jobStore"
         cmd = [
@@ -45,7 +44,7 @@ class CactusRunner:
             str(cactus_job_store),
             str(self.Cactus['seqFile']),
             "--outDir", str(cactus_dir),
-            "--outName", str(self.Cactus['outName']),
+            "--outName", str(self.Global['filePrefix']),
             "--maxCores", str(self.Cactus['maxCores']),
             '--reference', str(self.Cactus['reference']),
         ]
@@ -64,11 +63,12 @@ class CactusRunner:
         if not Path(self.Cactus['seqFile']).exists():
             logging.error(f"seqFile can not found: {self.Cactus['seqFile']}! Cactus need a seqFile to build graph "
                           f"pangenome.")
+            sys.exit(1)
         cactus_cmd = self.cactus_command()
         logging.info(f"Start running cactus-pangenome: {' '.join(cactus_cmd)}")
 
         try:
-            result = subprocess.run(cactus_cmd, capture_output=False, check=True, text=True)
+            subprocess.run(cactus_cmd, capture_output=False, check=True, text=True)
             logging.info(f"cactus-pangenome finished")
         except subprocess.CalledProcessError as e:
             logging.error(f"cactus-pangenome error: {e.returncode}")

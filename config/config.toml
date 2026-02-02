@@ -1,13 +1,14 @@
 # basic path config
-[Paths]
+[Global]
 work_dir = "./work"
+filePrefix = ""
+
 
 # ---Cactus Config---
 # cactus path config
 [Cactus]
 seqFile = "./seqfile"
 reference = ""
-outName = ""
 maxCores = 24
 
 # cactus output control
