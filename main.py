@@ -3,6 +3,11 @@ import logging
 import sys
 from pathlib import Path
 
+src_path = str(Path(__file__).parent.resolve())
+if src_path not in sys.path:
+    sys.path.append(src_path)
+
+
 from run_minicactus import CactusRunner
 from vg_stats_index import VgIndexStats
 
