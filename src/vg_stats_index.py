@@ -106,5 +106,7 @@ class VgIndexStats:
                 logging.info(f"decompress over: {file_path.name}")
             except subprocess.CalledProcessError as e:
                 logging.error(f"decompress error: {e.returncode}")
+                exit(1)
             except Exception as e:
                 logging.error(f"Error: {e}")
+                exit(1)
