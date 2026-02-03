@@ -10,7 +10,8 @@ filePrefix = "ocu_pangenome"
 seqFile = "./seqfile"
 reference = "sy"
 maxCores = 24
-
+# if use singularity
+singularityImage = "/ME4012_Vol0002/user_home/XiangY/sif/cactus_lastest.sif"
 # cactus output control
 [CactusOutFormat]
 vcf = true

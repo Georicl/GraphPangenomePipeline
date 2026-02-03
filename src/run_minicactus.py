@@ -55,7 +55,11 @@ class CactusRunner:
         if self.CactusOutFormat.get('vcf'): cmd.append('--vcf')
         if self.CactusOutFormat.get('gfa'): cmd.append('--gfa')
         if self.CactusOutFormat.get('gbz'): cmd.append('--gbz')
-
+        singularity_image = self.Cactus['singularityImage']
+        if singularity_image:
+            logging.info(f"Using Singularity image: {singularity_image}")
+            prefix_cmd = ["singularity", "exec", str(singularity_image)]
+            cmd = prefix_cmd + cmd
         return cmd
 
     def run_cactus(self) -> None:
