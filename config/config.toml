@@ -1,14 +1,14 @@
 # basic path config
 [Global]
 work_dir = "./work"
-filePrefix = ""
+filePrefix = "ocu_pangenome"
 
 
 # ---Cactus Config---
 # cactus path config
 [Cactus]
 seqFile = "./seqfile"
-reference = ""
+reference = "sy"
 maxCores = 24
 
 # cactus output control
