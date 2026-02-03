@@ -26,7 +26,7 @@ class CactusRunner:
         :return: cactus_path
         """
         work_dir = Path(self.Global['work_dir']).resolve()
-        cactus_dir = work_dir / "1. cactus"
+        cactus_dir = work_dir / "1.cactus"
 
         return cactus_dir
 

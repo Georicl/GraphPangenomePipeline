@@ -13,9 +13,9 @@ class VgIndexStats:
         self.VgIndex = self.config['VgIndex']
         
         # Initialize paths
-        self.vg_stats_dir: Path = self.work_dir / "2. vg_stats"
-        self.vg_index_dir: Path = self.work_dir / "3. vg_index"
-        self.cactus_dir: Path = self.work_dir / "1. cactus" / "pangenome"
+        self.vg_stats_dir: Path = self.work_dir / "2.vg_stats"
+        self.vg_index_dir: Path = self.work_dir / "3.vg_index"
+        self.cactus_dir: Path = self.work_dir / "1.cactus" / "pangenome"
 
     def _run_command(self, cmd: list, cwd: Path, output_file: Path = None):
         """
