@@ -3,10 +3,15 @@ import logging
 import sys
 from pathlib import Path
 
-src_path = str(Path(__file__).parent.resolve())
-if src_path not in sys.path:
-    sys.path.append(src_path)
+# 获取当前脚本所在目录的绝对路径（即项目根目录）
+root_dir = Path(__file__).parent.resolve()
+# 获取 src 目录的绝对路径
+src_dir = root_dir / "src"
 
+# 关键：将 src 目录添加到 Python 的搜索路径中
+if src_dir.exists() and str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+    print(f"DEBUG: Added {src_dir} to sys.path") # 调试用，运行成功后可删除
 
 from run_minicactus import CactusRunner
 from vg_stats_index import VgIndexStats
