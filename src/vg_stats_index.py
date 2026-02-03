@@ -43,6 +43,7 @@ class VgIndexStats:
     def _stats_vg_command(self) -> list:
         # Use absolute path for input file so it works regardless of cwd
         cactus_gbz_file = self.cactus_dir / f"{self.Global['filePrefix']}.gbz"
+        self._ensure_decompressed(cactus_gbz_file)
         return [
             "vg", "stats",
             "-N", "-E", "-L", "-l",
@@ -51,6 +52,7 @@ class VgIndexStats:
 
     def _paths_vg_command(self) -> list:
         cactus_gbz_file = self.cactus_dir / f"{self.Global['filePrefix']}.gbz"
+        self._ensure_decompressed(cactus_gbz_file)
         return [
             "vg", "paths",
             "-x", "-L",
@@ -59,6 +61,7 @@ class VgIndexStats:
 
     def _autoindex_vg_command(self) -> list:
         cactus_gfa_file = self.cactus_dir / f"{self.Global['filePrefix']}.gfa"
+        self._ensure_decompressed(cactus_gfa_file)
         return [
             "vg", "autoindex",
             "--workflow", "giraffe",
@@ -72,7 +75,7 @@ class VgIndexStats:
         if self.VgStats.get('stats'):
             logging.info("Start running vg stats")
             self._run_command(
-                self._stats_vg_command(), 
+                self._stats_vg_command(),
                 cwd=self.vg_stats_dir, 
                 output_file=self.vg_stats_dir / "vg_stats.txt"
             )
@@ -94,3 +97,14 @@ class VgIndexStats:
                 self._autoindex_vg_command(), 
                 cwd=self.vg_index_dir
             )
+
+    def _ensure_decompressed(self, file_path: Path):
+        gz_path = file_path.with_name(file_path.name + ".gz")
+        if gz_path.exists() and not file_path.exists():
+            try:
+                subprocess.run(["gzip", "-d", "-k", str(gz_path.resolve())], check=True)
+                logging.info(f"decompress over: {file_path.name}")
+            except subprocess.CalledProcessError as e:
+                logging.error(f"decompress error: {e.returncode}")
+            except Exception as e:
+                logging.error(f"Error: {e}")
