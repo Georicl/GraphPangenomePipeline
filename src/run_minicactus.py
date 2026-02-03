@@ -30,15 +30,18 @@ class CactusRunner:
 
         return cactus_dir
 
-    def cactus_command(self) -> list:
+    def _cactus_command(self) -> list:
         """
         generate run command
         cactus jobStore will use the new directory which created by generate_cactus_dir
         :return: cmd
         """
+        # use generate_cactus_dir object to create cactus directory
         cactus_dir = self.generate_cactus_dir()
+
         cactus_dir.mkdir(parents=True, exist_ok=True)
         cactus_job_store = cactus_dir / "jobStore"
+
         cmd = [
             "cactus-pangenome",
             str(cactus_job_store),
@@ -64,7 +67,8 @@ class CactusRunner:
             logging.error(f"seqFile can not found: {self.Cactus['seqFile']}! Cactus need a seqFile to build graph "
                           f"pangenome.")
             sys.exit(1)
-        cactus_cmd = self.cactus_command()
+
+        cactus_cmd = self._cactus_command()
         logging.info(f"Start running cactus-pangenome: {' '.join(cactus_cmd)}")
 
         try:
@@ -73,3 +77,7 @@ class CactusRunner:
         except subprocess.CalledProcessError as e:
             logging.error(f"cactus-pangenome error: {e.returncode}")
             sys.exit(1)
+
+if __name__ == '__main__':
+    cactus_run_code = CactusRunner('../config/config.toml')
+    cactus_run_code.run_cactus()

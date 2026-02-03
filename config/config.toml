@@ -16,3 +16,14 @@ maxCores = 24
 vcf = true
 gfa = true
 gbz = true
+
+# ---vg config---
+[VgStats]
+# enable vg stats
+stats = true
+# enable vg paths
+paths = true
+
+[VgIndex]
+autoindex = true
+threads=8
