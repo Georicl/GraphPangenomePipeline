@@ -35,10 +35,10 @@ class VgIndexStats:
             return True
         except subprocess.CalledProcessError as e:
             logging.error(f"Command failed with return code {e.returncode}: {e}")
-            return False
+            exit(1)
         except Exception as e:
             logging.error(f"An unexpected error occurred: {e}")
-            return False
+            exit(1)
 
     def _stats_vg_command(self) -> list:
         # Use absolute path for input file so it works regardless of cwd
