@@ -28,3 +28,4 @@ paths = true
 [VgIndex]
 autoindex = true
 threads=8
+

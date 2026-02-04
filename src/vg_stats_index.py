@@ -54,8 +54,8 @@ class VgIndexStats:
         cactus_gbz_file = self.cactus_dir / f"{self.Global['filePrefix']}.gbz"
         self._ensure_decompressed(cactus_gbz_file)
         return [
-            "vg", "paths",
-            "-x", "-L",
+            "vg", "paths", "-L",
+            "-x",
             str(cactus_gbz_file.resolve())
         ]
 
@@ -102,7 +102,7 @@ class VgIndexStats:
         gz_path = file_path.with_name(file_path.name + ".gz")
         if gz_path.exists() and not file_path.exists():
             try:
-                subprocess.run(["gzip", "-d", "-k", str(gz_path.resolve())], check=True)
+                subprocess.run(["gzip", "-d", str(gz_path.resolve())], check=True)
                 logging.info(f"decompress over: {file_path.name}")
             except subprocess.CalledProcessError as e:
                 logging.error(f"decompress error: {e.returncode}")
