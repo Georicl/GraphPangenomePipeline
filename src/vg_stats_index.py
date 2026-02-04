@@ -42,7 +42,7 @@ class VgIndexStats:
 
     def _stats_vg_command(self) -> list:
         # Use absolute path for input file so it works regardless of cwd
-        cactus_gbz_file = self.cactus_dir / f"{self.Global['filePrefix']}.gbz"
+        cactus_gbz_file = self.cactus_dir / f"{self.Global['filePrefix']}.full.gbz"
         self._ensure_decompressed(cactus_gbz_file)
         return [
             "vg", "stats",
@@ -51,7 +51,7 @@ class VgIndexStats:
         ]
 
     def _paths_vg_command(self) -> list:
-        cactus_gbz_file = self.cactus_dir / f"{self.Global['filePrefix']}.gbz"
+        cactus_gbz_file = self.cactus_dir / f"{self.Global['filePrefix']}.full.gbz"
         self._ensure_decompressed(cactus_gbz_file)
         return [
             "vg", "paths", "-L",
@@ -60,7 +60,7 @@ class VgIndexStats:
         ]
 
     def _autoindex_vg_command(self) -> list:
-        cactus_gfa_file = self.cactus_dir / f"{self.Global['filePrefix']}.gfa"
+        cactus_gfa_file = self.cactus_dir / f"{self.Global['filePrefix']}.full.gfa"
         self._ensure_decompressed(cactus_gfa_file)
         return [
             "vg", "autoindex",

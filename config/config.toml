@@ -1,7 +1,7 @@
 # basic path config
 [Global]
 work_dir = "./work"
-filePrefix = "ocu_pangenome"
+filePrefix = "ocu"
 
 
 # ---Cactus Config---
