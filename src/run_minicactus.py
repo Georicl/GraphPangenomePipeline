@@ -53,9 +53,9 @@ class CactusRunner:
             '--reference', str(self.Cactus['reference']),
         ]
 
-        if self.CactusOutFormat.get('vcf'): cmd.append(shlex.split('--vcf full'))
-        if self.CactusOutFormat.get('gfa'): cmd.append(shlex.split('--gfa full'))
-        if self.CactusOutFormat.get('gbz'): cmd.append(shlex.split('--gbz full'))
+        if self.CactusOutFormat.get('vcf'): cmd.extend(shlex.split('--vcf full'))
+        if self.CactusOutFormat.get('gfa'): cmd.extend(shlex.split('--gfa full'))
+        if self.CactusOutFormat.get('gbz'): cmd.extend(shlex.split('--gbz full'))
         singularity_image = self.Cactus['singularityImage']
         if singularity_image:
             logging.info(f"Using Singularity image: {singularity_image}")
