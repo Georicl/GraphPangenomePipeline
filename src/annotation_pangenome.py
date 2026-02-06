@@ -79,7 +79,7 @@ class AnnotationRunner:
             ann_cmd = sin_cmd + ann_cmd
 
         # run grannot
-        if self.config['Gaf'].get('gaf'):
+        if self.config['Gaf'].get('Gaf'):
             logging.info("Start running grannot generate gaf annotation file")
             try:
                 subprocess.run(gaf_cmd, capture_output=False, check=True, text=True)
