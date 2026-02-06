@@ -1,6 +1,8 @@
 [project]
-name = "graphpangenomepipeline"
+name = "GraphPangenomePipeline"
 version = "1.0.0"
-description = "Add your description here"
+description = "The graph pangenome assembly and analysis pipeline"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pandas>=3.0.0",
+]
