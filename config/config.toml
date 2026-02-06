@@ -12,11 +12,13 @@ reference = "sy"
 maxCores = 24
 # if use singularity
 singularityImage = "/ME4012_Vol0002/user_home/XiangY/sif/cactus_lastest.sif"
-# cactus output control
+# cactus output control, this arg default --* full
 [CactusOutFormat]
 vcf = true
 gfa = true
 gbz = true
+
+[CactusArg]
 
 # ---vg config---
 [VgStats]
@@ -29,3 +31,22 @@ paths = true
 autoindex = true
 threads=8
 
+# ---annotate config---
+[Annotation]
+gff3 = "/ME4012_Vol0002/user_home/XiangY/genome/sy_rmTE_chr.gff3"
+SourceGenome = "sy"
+singularityImage = "/ME4012_Vol0002/user_home/XiangY/sif/Grannot.sif"
+## ---Grannot config---
+[Gaf]
+Gaf = true
+
+# 可以接收自定义参数 (全称输入)
+[ann]
+annotation = true
+pav_matrix = true
+identity = 80
+coverage = 80
+target = ""
+
+# ---vg wgs map config---
+[wgs]
