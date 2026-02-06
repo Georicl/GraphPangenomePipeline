@@ -57,7 +57,7 @@ class CactusRunner:
         if self.CactusOutFormat.get('gfa'): cmd.extend(shlex.split('--gfa full'))
         if self.CactusOutFormat.get('gbz'): cmd.extend(shlex.split('--gbz full'))
         singularity_image = self.Cactus['singularityImage']
-        if singularity_image:
+        if singularity_image and singularity_image != "":
             logging.info(f"Using Singularity image: {singularity_image}")
             prefix_cmd = ["singularity", "exec", str(singularity_image)]
             cmd = prefix_cmd + cmd

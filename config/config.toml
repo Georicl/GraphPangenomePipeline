@@ -18,8 +18,6 @@ vcf = true
 gfa = true
 gbz = true
 
-[CactusArg]
-
 # ---vg config---
 [VgStats]
 # enable vg stats
@@ -44,8 +42,6 @@ Gaf = true
 [ann]
 annotation = true
 pav_matrix = true
-identity = 80
-coverage = 80
 target = ""
 
 # ---vg wgs map config---
