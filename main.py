@@ -15,6 +15,7 @@ if src_dir.exists() and str(src_dir) not in sys.path:
 
 from run_minicactus import CactusRunner
 from vg_stats_index import VgIndexStats
+from annotation_pangenome import AnnotationRunner
 
 def setup_logging():
     "set up log file"
@@ -35,17 +36,19 @@ def main():
 
     parser.add_argument("--cactus-pangenome", action="store_true", help="Run minigraph-cactus module")
     parser.add_argument("--vg", action="store_true", help="Run vg stats and index module")
-    parser.add_argument("--all", action="store_true", help="Run the full pipeline (Cactus -> VG)")
+    parser.add_argument("--annotation", action="store_true", help="Run annotation module")
+    parser.add_argument("--all", action="store_true", help="Run the full pipeline (Cactus -> VG -> Grannot)")
 
     args = parser.parse_args()
-    config_path = args.config
 
+    config_path = args.config
     if not Path(config_path).exists():
         logging.error(f"Config file not found: {config_path}")
         sys.exit(1)
 
     run_cactus = args.cactus_pangenome or args.all
     run_vg = args.vg or args.all
+    run_anno = args.annotation or args.all
 
     if not (run_cactus or run_vg):
         parser.print_help()
@@ -62,6 +65,11 @@ def main():
         logging.info(">>> Starting Step 2: VG Stats and Indexing")
         vg_runner = VgIndexStats(config_path)
         vg_runner.run_vg_index_stats()
+
+    if run_anno:
+        logging.info(">>> Starting Step 3: Annotation")
+        anno_runner = AnnotationRunner(config_path)
+        anno_runner.run_annotation()
 
     logging.info("Pipeline execution finished successfully.")
 
