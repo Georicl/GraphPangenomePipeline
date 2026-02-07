@@ -1,5 +1,6 @@
 import urllib.request
 from pathlib import Path
+import gzip
 
 def download_and_save(url, destination):
     """download text dataset"""
@@ -9,6 +10,24 @@ def download_and_save(url, destination):
         print(f"Saved successfully: {destination}")
     except Exception as e:
         print(f"Failed to download {url}: {e}")
+
+def filter_gff(input_gz, output_gz, chrom_id):
+    """Filter GFF3 for a specific chromosome"""
+    print(f"Filtering {input_gz} for {chrom_id} -> {output_gz}")
+    with gzip.open(input_gz, 'rt') as f_in, gzip.open(output_gz, 'wt') as f_out:
+        for line in f_in:
+            if line.startswith('#'):
+                # Keep headers, but might want to filter ##sequence-region if strict
+                if line.startswith('##sequence-region'):
+                    if chrom_id in line:
+                        f_out.write(line)
+                else:
+                    f_out.write(line)
+            else:
+                cols = line.split('\t')
+                if len(cols) > 0 and cols[0] == chrom_id:
+                    f_out.write(line)
+    print("Filtering complete.")
 
 def prepare_real_yeast_test():
     base_dir = Path("test/data")
@@ -28,7 +47,13 @@ def prepare_real_yeast_test():
 
     print(">>> Downloading Genomes and Annotation...")
     download_and_save(sources["ref_fa"], genome_dir / "s288c_chrI.fa.gz")
-    download_and_save(sources["ref_gff"], genome_dir / "s288c.gff3.gz")
+    
+    full_gff = genome_dir / "s288c.gff3.gz"
+    download_and_save(sources["ref_gff"], full_gff)
+    
+    # Filter for chrI (NC_001133.9)
+    filter_gff(full_gff, genome_dir / "s288c_chrI.gff3.gz", "NC_001133.9")
+
     download_and_save(sources["I118_fa"], genome_dir / "I118_chrI.fa.gz")
     download_and_save(sources["imx2600_fa"], genome_dir / "IMX2600_chrI.fa.gz")
 
