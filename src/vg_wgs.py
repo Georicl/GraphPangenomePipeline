@@ -74,7 +74,7 @@ class VgWgsRunner:
         logging.info(f"starting Mapping [{sample_id}, directory: {sample_dir}, command: {giraffe_cmd}]")
         try:
             with open(gam_file, "w") as w:
-                subprocess.run(giraffe_cmd, stdout=w, check=True, stderr=subprocess.PIPE)
+                subprocess.run(giraffe_cmd, stdout=w, check=True, stderr=subprocess.PIPE, cwd=sample_dir)
         except subprocess.CalledProcessError as e:
             logging.error(f"Sample: [{sample_id}] giraffe error: {e.returncode}")
             return False
@@ -91,7 +91,7 @@ class VgWgsRunner:
 
         logging.info(f"starting Packing [{gam_file}, directory: {sample_dir}, command: {pack_cmd}]")
         try:
-            subprocess.run(pack_cmd, check=True, stderr=subprocess.PIPE)
+            subprocess.run(pack_cmd, check=True, stderr=subprocess.PIPE, cwd=sample_dir)
         except subprocess.CalledProcessError as e:
             logging.error(f"Pack file: [{gam_file}] pack error: {e.returncode}")
             return False

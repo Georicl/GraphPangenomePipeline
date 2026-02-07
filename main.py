@@ -6,6 +6,7 @@ from pathlib import Path
 from src.run_minicactus import CactusRunner
 from src.vg_stats_index import VgIndexStats
 from src.annotation_pangenome import AnnotationRunner
+from src.vg_wgs import VgWgsRunner
 
 def setup_logging():
     "set up log file"
@@ -27,6 +28,7 @@ def main():
     parser.add_argument("--cactus-pangenome", action="store_true", help="Run minigraph-cactus module")
     parser.add_argument("--vg", action="store_true", help="Run vg stats and index module")
     parser.add_argument("--annotation", action="store_true", help="Run annotation module")
+    parser.add_argument("--wgs", action="store_true", help="Run vg wgs pipeline")
     parser.add_argument("--all", action="store_true", help="Run the full pipeline (Cactus -> VG -> Grannot)")
 
     args = parser.parse_args()
@@ -39,6 +41,7 @@ def main():
     run_cactus = args.cactus_pangenome or args.all
     run_vg = args.vg or args.all
     run_anno = args.annotation or args.all
+    run_wgs = args.wgs or args.all
 
     if not (run_cactus or run_vg):
         parser.print_help()
@@ -60,6 +63,11 @@ def main():
         logging.info(">>> Starting Step 3: Annotation")
         anno_runner = AnnotationRunner(config_path)
         anno_runner.run_annotation()
+
+    if run_wgs:
+        logging.info(">>> Starting Step 4: WGS Pipeline")
+        wgs_runner = VgWgsRunner(config_path)
+        wgs_runner.run_wgs()
 
     logging.info("Pipeline execution finished successfully.")
 
