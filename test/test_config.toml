@@ -1,0 +1,52 @@
+# basic path config
+[Global]
+work_dir = "test/workflow"
+filePrefix = "yeast_test"
+
+
+# ---Cactus Config---
+# cactus path config
+[Cactus]
+seqFile = "test/data/seqfile.txt"
+reference = "s288c"
+maxCores = 8
+# if use singularity, update these paths to your local .sif files
+singularityImage = "cactus.sif"
+
+# cactus output control
+[CactusOutFormat]
+vcf = true
+gfa = true
+gbz = true
+
+# ---vg config---
+[VgStats]
+stats = true
+paths = true
+
+[VgIndex]
+autoindex = true
+threads = 4
+
+# ---annotate config---
+[Annotation]
+gff3 = "test/data/genomes/s288c.gff3.gz"
+SourceGenome = "s288c"
+singularityImage = "Grannot.sif"
+
+## ---Grannot config---
+[Gaf]
+Gaf = true
+
+# 自定义参数
+[ann]
+annotation = true
+pav_matrix = true
+target = ""
+
+# ---vg wgs map config---
+[wgs]
+DataTable = "test/data/datatable.csv"
+Parallel_job = 1
+Threads = 4
+MinMapQ = 0
