@@ -158,3 +158,21 @@ CSV 文件要求包含以下表头:
 `MinMapQ`  
 设置 `vg pack` 时的最小比对质量 (Minimum Mapping Quality), 输入类型为 int.  
 
+---
+## 辅助工具  
+
+### 生成 WGS DataTable  
+我们提供了一个脚本 `scripts/generate_datatable.py` 来自动化生成 `[wgs]` 模块所需的 CSV 文件。  
+该脚本会递归搜索目录，识别双端（PE）和单端（SE）测序文件。  
+
+**识别逻辑：**  
+- **双端 (PE):** 寻找成对的 `*_1_clean.fq.gz` 和 `*_2_clean.fq.gz` 文件。  
+- **单端 (SE):** 识别其他以 `.fq.gz`, `.fastq.gz`, `.fq`, `.fastq` 结尾的文件。  
+
+**运行方式：**  
+```bash
+# 扫描 /path/to/fastqs 目录并将结果写入 datatable.csv
+python scripts/generate_datatable.py /path/to/fastqs --outfile datatable.csv
+```  
+生成后，请将该文件的路径填入 `config.toml` 中的 `DataTable` 参数。  
+
