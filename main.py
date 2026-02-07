@@ -43,7 +43,7 @@ def main():
     run_anno = args.annotation or args.all
     run_wgs = args.wgs or args.all
 
-    if not (run_cactus or run_vg):
+    if not (run_cactus or run_vg or run_anno or run_wgs):
         parser.print_help()
         sys.exit(0)
 

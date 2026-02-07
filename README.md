@@ -67,7 +67,12 @@ genomeC /path/to/genomeC.fasta
 
 3.运行管道  
 ```bash
-python main.py --config config.toml -all # 运行全流程
+python main.py --config config.toml --all # 运行全流程
+# 或者独立运行某个模块
+python main.py --config config.toml --cactus-pangenome # 运行构建
+python main.py --config config.toml --vg # 运行统计与索引
+python main.py --config config.toml --annotation # 运行注释
+python main.py --config config.toml --wgs # 运行WGS比对
 ```  
 
 > [!note]  
@@ -137,4 +142,19 @@ singularity容器的路径, 如果不存在可以留空为`singualrityImage = ""
 `annotation` 为annotation的参数`--annotation`, 当该项为`true`时, 才启用ann注释  
 `pav_matrix` 当该项为`true`时, 为输出Pav矩阵文件, 以观察基因之间的差异, 实际为grannot的参数 `--pav_matrix`  
 `target` 实际为grannot的参数`--target`, 输入的参数为str, 如不输入, 默认值为"", 则在grannot中默认会比较所有参与构建的基因组, **请注意, 该项不确定当你输入多个参数, 使得target本身成为列表时, 会生效, 因此如果需要比较多个特定参与构建的基因组时, 该项建议留空**  
+
+**[wgs]**  
+该项为使用 `vg giraffe` 进行全基因组重测序 (WGS) 数据比对以及使用 `vg pack` 进行覆盖度统计的设置.  
+`DataTable`  
+输入为一个 CSV 文件的路径, 该文件描述了待比对的样本信息.  
+CSV 文件要求包含以下表头:  
+- `SampleID`: 样本名称.  
+- `R1`: Read 1 Fastq 文件路径.  
+- `R2`: Read 2 Fastq 文件路径 (可选).  
+`Parallel_job`  
+设置并行处理的样本数量, 输入类型为 int.  
+`Threads`  
+设置每个样本在运行 `vg giraffe` 和 `vg pack` 时使用的线程数, 输入类型为 int.  
+`MinMapQ`  
+设置 `vg pack` 时的最小比对质量 (Minimum Mapping Quality), 输入类型为 int.  
 
