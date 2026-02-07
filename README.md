@@ -93,7 +93,7 @@ python main.py --config config.toml -all # 运行全流程
 **[Cactus]**  
 该项包含cactus-pangenome的部分主要设置  
 `seqFile`  
-为cactus-pangenome中要求的[seqFile](#配置管道-1.准备seqFile)  
+为cactus-pangenome中要求的[seqFile](#配置管道-)  
 `reference`  
 要求和seqFile中的某个Genome序列一致, 为cactus-pangenome中要求的参考基因组(核心基因)  
 `mzxCores`  
