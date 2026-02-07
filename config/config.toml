@@ -46,3 +46,7 @@ target = ""
 
 # ---vg wgs map config---
 [wgs]
+DataTable = ""
+Parallel_job = 1
+Threads = 8
+MinMapQ = 0
