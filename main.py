@@ -3,19 +3,9 @@ import logging
 import sys
 from pathlib import Path
 
-# 获取当前脚本所在目录的绝对路径（即项目根目录）
-root_dir = Path(__file__).parent.resolve()
-# 获取 src 目录的绝对路径
-src_dir = root_dir / "src"
-
-# 关键：将 src 目录添加到 Python 的搜索路径中
-if src_dir.exists() and str(src_dir) not in sys.path:
-    sys.path.insert(0, str(src_dir))
-    print(f"DEBUG: Added {src_dir} to sys.path") # 调试用，运行成功后可删除
-
-from run_minicactus import CactusRunner
-from vg_stats_index import VgIndexStats
-from annotation_pangenome import AnnotationRunner
+from src.run_minicactus import CactusRunner
+from src.vg_stats_index import VgIndexStats
+from src.annotation_pangenome import AnnotationRunner
 
 def setup_logging():
     "set up log file"
