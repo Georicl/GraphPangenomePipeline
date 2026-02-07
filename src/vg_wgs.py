@@ -40,17 +40,19 @@ class VgWgsRunner:
             sys.exit(1)
         return samples
 
-    def single_sample_process(self, sample_info: list) -> bool:
+    def single_sample_process(self, sample_info: dict) -> bool:
         """single sample map process"""
 
-        sample_id = sample_info[0]
-        r1 = sample_info[1]
-        if sample_info[2]:
-            r2 = sample_info[2]
-        else:
+        sample_id = sample_info['SampleID']
+        r1 = sample_info['R1']
+        r2 = sample_info.get('R2')
+
+        if r2 and not r2.strip():
             r2 = None
+
         # create sample directory
         sample_dir = self.vg_wgs_output / sample_id
+        sample_dir.mkdir(parents=True, exist_ok=True)
 
         # file name
         gam_file = sample_dir / f"{sample_id}.gam"
@@ -115,7 +117,7 @@ class VgWgsRunner:
             logging.error("No samples found in the CSV file.")
             sys.exit(1)
 
-        parallel_job = self.wgs.get('ParallelJob', 1)
+        parallel_job = self.wgs.get('Parallel_job', 1)
         logging.info(f"Starting WGS analysis with {parallel_job} parallel jobs.")
 
         with ProcessPoolExecutor(max_workers=parallel_job) as executor:
