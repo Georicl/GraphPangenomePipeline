@@ -46,7 +46,7 @@ target = ""
 
 # ---vg wgs map config---
 [wgs]
-DataTable = ""
+DataTable = "/ME4012_Vol0002/user_home/XiangY/work/map_pangenome/test_pipeline/datatable.csv"
 Parallel_job = 1
 Threads = 8
 MinMapQ = 0
