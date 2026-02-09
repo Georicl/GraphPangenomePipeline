@@ -1,7 +1,11 @@
-import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import Optional
+
+import typer
+from rich.console import Console
+from rich.logging import RichHandler
 
 from src.run_minicactus import CactusRunner
 from src.vg_stats_index import VgIndexStats
@@ -9,76 +13,95 @@ from src.annotation_pangenome import AnnotationRunner
 from src.vg_wgs import VgWgsRunner
 from src.vg_call import CallVariantRunner
 
+# Initializing Typer and Rich Console
+app = typer.Typer(
+    help="Graph Pangenome Analysis Pipeline: Assembly, Annotation, Genotyping, and Beyond.",
+    rich_markup_mode="rich",
+    add_completion=False,
+)
+console = Console()
+
 def setup_logging():
-    "set up log file"
+    """Set up logging with Rich for better visuals."""
+    # We use force=True to override any previously configured logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True, console=console)],
+        force=True
     )
 
-def main():
+def validate_config(config: str) -> Path:
+    """Validate if the config file exists."""
+    config_path = Path(config)
+    if not config_path.exists():
+        console.print(f"[bold red]Error:[/bold red] Config file not found: [yellow]{config}[/yellow]")
+        raise typer.Exit(code=1)
+    return config_path
+
+@app.command()
+def run(
+    config: str = typer.Option(..., "--config", "-c", help="Path to the config.toml file"),
+    cactus: bool = typer.Option(False, "--cactus", help="Run minigraph-cactus module"),
+    vg: bool = typer.Option(False, "--vg", help="Run vg stats and index module"),
+    annotation: bool = typer.Option(False, "--annotation", help="Run annotation module"),
+    wgs: bool = typer.Option(False, "--wgs", help="Run vg wgs pipeline"),
+    call: bool = typer.Option(False, "--call", help="Run vg call variant module"),
+    all: bool = typer.Option(False, "--all", help="Run the full pipeline (Cactus -> VG -> Annotation -> WGS -> Call)"),
+):
+    """
+    Run the pipeline steps based on the provided configuration.
+    """
     setup_logging()
+    config_path = validate_config(config)
+    
+    # Logic to determine which modules to run
+    run_cactus = cactus or all
+    run_vg = vg or all
+    run_anno = annotation or all
+    run_wgs = wgs or all
+    run_call = call or all
 
-    parser = argparse.ArgumentParser(description="Graph Pangenome Analysis Pipeline")
+    if not any([run_cactus, run_vg, run_anno, run_wgs, run_call]):
+        console.print("[yellow]No modules selected. Use --help to see available options.[/yellow]")
+        raise typer.Exit()
 
-    parser.add_argument("--config", type=str, required=True, help="Path to the config file")
-
-    parser.add_argument("--cactus-pangenome", action="store_true", help="Run minigraph-cactus module")
-    parser.add_argument("--vg", action="store_true", help="Run vg stats and index module")
-    parser.add_argument("--annotation", action="store_true", help="Run annotation module")
-    parser.add_argument("--wgs", action="store_true", help="Run vg wgs pipeline")
-    parser.add_argument("--call", action="store_true", help="Run vg call variant module")
-    parser.add_argument("--all", action="store_true", help="Run the full pipeline (Cactus -> VG -> Grannot)")
-
-    args = parser.parse_args()
-
-    config_path = args.config
-    if not Path(config_path).exists():
-        logging.error(f"Config file not found: {config_path}")
-        sys.exit(1)
-
-    run_cactus = args.cactus_pangenome or args.all
-    run_vg = args.vg or args.all
-    run_anno = args.annotation or args.all
-    run_wgs = args.wgs or args.all
-    run_call = args.call or args.all
-
-    if not (run_cactus or run_vg or run_anno or run_wgs or run_call):
-        parser.print_help()
-        sys.exit(0)
-
-    # 1. 运行 Cactus 模块
+    # 1. Cactus Module
     if run_cactus:
-        logging.info(">>> Starting Step 1: Cactus Pangenome Construction")
-        cactus_runner = CactusRunner(config_path)
-        cactus_runner.run_cactus()
+        logging.info("[bold cyan]>>> Starting Step 1: Cactus Pangenome Construction[/bold cyan]")
+        CactusRunner(str(config_path)).run_cactus()
 
-    # 2. 运行 VG 统计与索引模块
+    # 2. VG Stats & Indexing
     if run_vg:
-        logging.info(">>> Starting Step 2: VG Stats and Indexing")
-        vg_runner = VgIndexStats(config_path)
-        vg_runner.run_vg_index_stats()
+        logging.info("[bold cyan]>>> Starting Step 2: VG Stats and Indexing[/bold cyan]")
+        VgIndexStats(str(config_path)).run_vg_index_stats()
 
+    # 3. Annotation
     if run_anno:
-        logging.info(">>> Starting Step 3: Annotation")
-        anno_runner = AnnotationRunner(config_path)
-        anno_runner.run_annotation()
+        logging.info("[bold cyan]>>> Starting Step 3: Annotation[/bold cyan]")
+        AnnotationRunner(str(config_path)).run_annotation()
 
+    # 4. WGS Mapping
     if run_wgs:
-        logging.info(">>> Starting Step 4: WGS Pipeline")
-        wgs_runner = VgWgsRunner(config_path)
-        wgs_runner.run_wgs()
+        logging.info("[bold cyan]>>> Starting Step 4: WGS Pipeline[/bold cyan]")
+        VgWgsRunner(str(config_path)).run_wgs()
 
+    # 5. Variant Calling
     if run_call:
-        logging.info(">>> Starting Step 5: Variant Calling")
-        call_runner = CallVariantRunner(config_path)
-        call_runner.run_vg_call()
+        logging.info("[bold cyan]>>> Starting Step 5: Variant Calling[/bold cyan]")
+        CallVariantRunner(str(config_path)).run_vg_call()
 
-    logging.info("Pipeline execution finished successfully.")
+    console.print("\n[bold green]Pipeline execution finished successfully![/bold green] :rocket:")
 
+@app.command()
+def check(
+    config: Optional[str] = typer.Option(None, "--config", "-c", help="Check config file and environment")
+):
+    """
+    [Future Work] Check the environment and configuration validity.
+    """
+    console.print("[yellow]Environment check module is under development...[/yellow]")
 
 if __name__ == "__main__":
-    main()
+    app()
