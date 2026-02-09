@@ -50,3 +50,8 @@ DataTable = "/ME4012_Vol0002/user_home/XiangY/work/map_pangenome/test_pipeline/d
 Parallel_job = 1
 Threads = 8
 MinMapQ = 0
+
+# ---vg call variant config---
+[call]
+Threads = 8
+Parallel_job = 1
