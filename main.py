@@ -7,6 +7,7 @@ from src.run_minicactus import CactusRunner
 from src.vg_stats_index import VgIndexStats
 from src.annotation_pangenome import AnnotationRunner
 from src.vg_wgs import VgWgsRunner
+from src.vg_call import CallVariantRunner
 
 def setup_logging():
     "set up log file"
@@ -29,6 +30,7 @@ def main():
     parser.add_argument("--vg", action="store_true", help="Run vg stats and index module")
     parser.add_argument("--annotation", action="store_true", help="Run annotation module")
     parser.add_argument("--wgs", action="store_true", help="Run vg wgs pipeline")
+    parser.add_argument("--call", action="store_true", help="Run vg call variant module")
     parser.add_argument("--all", action="store_true", help="Run the full pipeline (Cactus -> VG -> Grannot)")
 
     args = parser.parse_args()
@@ -42,8 +44,9 @@ def main():
     run_vg = args.vg or args.all
     run_anno = args.annotation or args.all
     run_wgs = args.wgs or args.all
+    run_call = args.call or args.all
 
-    if not (run_cactus or run_vg or run_anno or run_wgs):
+    if not (run_cactus or run_vg or run_anno or run_wgs or run_call):
         parser.print_help()
         sys.exit(0)
 
@@ -68,6 +71,11 @@ def main():
         logging.info(">>> Starting Step 4: WGS Pipeline")
         wgs_runner = VgWgsRunner(config_path)
         wgs_runner.run_wgs()
+
+    if run_call:
+        logging.info(">>> Starting Step 5: Variant Calling")
+        call_runner = CallVariantRunner(config_path)
+        call_runner.run_vg_call()
 
     logging.info("Pipeline execution finished successfully.")
 
