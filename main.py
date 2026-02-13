@@ -41,9 +41,10 @@ def setup_logging():
 @app.command()
 def run(
     config_file: Optional[str] = typer.Option(
-        "config/config.toml", "--config", "-c", 
-        help="Path to the base config.toml file",
-        rich_help_panel="Base Configuration"
+        None, "--config", "-c", 
+        help="Path to a custom config.toml file. If not provided, 'config/config.toml' will be used by default.",
+        rich_help_panel="Base Configuration",
+        show_default=False
     ),
     # Execution Modules
     cactus: bool = typer.Option(False, "--cactus", help="Run minigraph-cactus module", rich_help_panel="Execution Modules"),
@@ -85,8 +86,15 @@ def run(
     """
     setup_logging()
     
-    # Initialize ConfigManager with base config (if exists)
-    config_mgr = ConfigManager(config_file if Path(config_file).exists() else None)
+    # Determine config path: provided or default (relative to script location)
+    if config_file:
+        actual_config_path = Path(config_file)
+    else:
+        # Default to 'config/config.toml' relative to this script's directory
+        actual_config_path = Path(__file__).parent / "config" / "config.toml"
+    
+    # Initialize ConfigManager with config file (if exists)
+    config_mgr = ConfigManager(str(actual_config_path) if actual_config_path.exists() else None)
     
     # Construct override dictionary based on flattened CLI arguments
     overrides = {
