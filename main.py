@@ -12,10 +12,16 @@ from src.vg_stats_index import VgIndexStats
 from src.annotation_pangenome import AnnotationRunner
 from src.vg_wgs import VgWgsRunner
 from src.vg_call import CallVariantRunner
+from src.config_loader import ConfigManager
 
 # Initializing Typer and Rich Console
 app = typer.Typer(
-    help="Graph Pangenome Analysis Pipeline: Assembly, Annotation, Genotyping, and Beyond.",
+    help="""Graph Pangenome Analysis Pipeline:
+    
+    [bold cyan]Assembly, Annotation, Genotyping, and Beyond.[/bold cyan]
+    
+    [bold black]Author: Yang Xiang[/bold black]
+    """,
     rich_markup_mode="rich",
     add_completion=False,
 )
@@ -32,65 +38,140 @@ def setup_logging():
         force=True
     )
 
-def validate_config(config: str) -> Path:
-    """Validate if the config file exists."""
-    config_path = Path(config)
-    if not config_path.exists():
-        console.print(f"[bold red]Error:[/bold red] Config file not found: [yellow]{config}[/yellow]")
-        raise typer.Exit(code=1)
-    return config_path
-
 @app.command()
 def run(
-    config: str = typer.Option(..., "--config", "-c", help="Path to the config.toml file"),
-    cactus: bool = typer.Option(False, "--cactus", help="Run minigraph-cactus module"),
-    vg: bool = typer.Option(False, "--vg", help="Run vg stats and index module"),
-    annotation: bool = typer.Option(False, "--annotation", help="Run annotation module"),
-    wgs: bool = typer.Option(False, "--wgs", help="Run vg wgs pipeline"),
-    call: bool = typer.Option(False, "--call", help="Run vg call variant module"),
-    all: bool = typer.Option(False, "--all", help="Run the full pipeline (Cactus -> VG -> Annotation -> WGS -> Call)"),
+    config_file: Optional[str] = typer.Option(
+        "config/config.toml", "--config", "-c", 
+        help="Path to the base config.toml file",
+        rich_help_panel="Base Configuration"
+    ),
+    # Execution Modules
+    cactus: bool = typer.Option(False, "--cactus", help="Run minigraph-cactus module", rich_help_panel="Execution Modules"),
+    vg: bool = typer.Option(False, "--vg", help="Run vg stats and index module", rich_help_panel="Execution Modules"),
+    annotation: bool = typer.Option(False, "--annotation", help="Run annotation module", rich_help_panel="Execution Modules"),
+    wgs: bool = typer.Option(False, "--wgs", help="Run vg wgs pipeline", rich_help_panel="Execution Modules"),
+    call: bool = typer.Option(False, "--call", help="Run vg call variant module", rich_help_panel="Execution Modules"),
+    all: bool = typer.Option(False, "--all", help="Run the full pipeline", rich_help_panel="Execution Modules"),
+    
+    # [Global] Overrides
+    work_dir: Optional[str] = typer.Option(None, "--work-dir", help="Work directory", rich_help_panel="Global Settings"),
+    prefix: Optional[str] = typer.Option(None, "--prefix", help="File prefix for outputs", rich_help_panel="Global Settings"),
+
+    # [Cactus] Overrides
+    cactus_seq: Optional[str] = typer.Option(None, "--cactus-seq", help="Cactus seqFile path", rich_help_panel="Cactus Pangenome Settings"),
+    cactus_ref: Optional[str] = typer.Option(None, "--cactus-ref", help="Cactus reference genome name", rich_help_panel="Cactus Pangenome Settings"),
+    cactus_cores: Optional[int] = typer.Option(None, "--cactus-cores", help="Max cores for Cactus", rich_help_panel="Cactus Pangenome Settings"),
+    cactus_image: Optional[str] = typer.Option(None, "--cactus-image", help="Singularity image for Cactus", rich_help_panel="Cactus Pangenome Settings"),
+
+    # [VgIndex] Overrides
+    vg_threads: Optional[int] = typer.Option(None, "--vg-threads", help="Threads for VG indexing", rich_help_panel="VG Indexing Settings"),
+    
+    # [Annotation] Overrides
+    anno_gff: Optional[str] = typer.Option(None, "--anno-gff", help="GFF3 file for annotation", rich_help_panel="Annotation Settings"),
+    anno_source: Optional[str] = typer.Option(None, "--anno-source", help="Source genome for annotation", rich_help_panel="Annotation Settings"),
+    anno_image: Optional[str] = typer.Option(None, "--anno-image", help="Singularity image for Grannot", rich_help_panel="Annotation Settings"),
+
+    # [wgs] Overrides
+    wgs_data: Optional[str] = typer.Option(None, "--wgs-data", help="DataTable CSV for WGS", rich_help_panel="WGS Mapping Settings"),
+    wgs_threads: Optional[int] = typer.Option(None, "--wgs-threads", help="Threads per sample in WGS", rich_help_panel="WGS Mapping Settings"),
+    wgs_parallel: Optional[int] = typer.Option(None, "--wgs-parallel", help="Parallel samples in WGS", rich_help_panel="WGS Mapping Settings"),
 ):
     """
-    Run the pipeline steps based on the provided configuration.
+    Run the pipeline. Parameters provided via CLI will override those in the config file.
     """
     setup_logging()
-    config_path = validate_config(config)
+    
+    # Initialize ConfigManager with base config (if exists)
+    config_mgr = ConfigManager(config_file if Path(config_file).exists() else None)
+    
+    # Construct override dictionary based on flattened CLI arguments
+    overrides = {
+        "Global": {},
+        "Cactus": {},
+        "VgIndex": {},
+        "Annotation": {},
+        "wgs": {},
+    }
+    
+    # Mapping CLI to Dict
+    if work_dir: overrides["Global"]["work_dir"] = work_dir
+    if prefix: overrides["Global"]["filePrefix"] = prefix
+    
+    if cactus_seq: overrides["Cactus"]["seqFile"] = cactus_seq
+    if cactus_ref: overrides["Cactus"]["reference"] = cactus_ref
+    if cactus_cores: overrides["Cactus"]["maxCores"] = cactus_cores
+    if cactus_image: overrides["Cactus"]["singularityImage"] = cactus_image
+    
+    if vg_threads: overrides["VgIndex"]["threads"] = vg_threads
+    
+    if anno_gff: overrides["Annotation"]["gff3"] = anno_gff
+    if anno_source: overrides["Annotation"]["SourceGenome"] = anno_source
+    if anno_image: overrides["Annotation"]["singularityImage"] = anno_image
+    
+    if wgs_data: overrides["wgs"]["DataTable"] = wgs_data
+    if wgs_threads: overrides["wgs"]["Threads"] = wgs_threads
+    if wgs_parallel: overrides["wgs"]["Parallel_job"] = wgs_parallel
+
+    # Clean empty sections in overrides
+    overrides = {k: v for k, v in overrides.items() if v}
+    
+    if overrides:
+        config_mgr.update_config(overrides)
+    
+    config = config_mgr.get_config()
+    
+    # Basic validation before running
+    try:
+        config_mgr.validate()
+    except ValueError as e:
+        console.print(f"[bold red]Config Error:[/bold red] {e}")
+        raise typer.Exit(1)
+
     
     # Logic to determine which modules to run
-    run_cactus = cactus or all
-    run_vg = vg or all
-    run_anno = annotation or all
-    run_wgs = wgs or all
-    run_call = call or all
+    run_modules = {
+        "cactus": cactus or all,
+        "vg": vg or all,
+        "annotation": annotation or all,
+        "wgs": wgs or all,
+        "call": call or all,
+    }
 
-    if not any([run_cactus, run_vg, run_anno, run_wgs, run_call]):
+    if not any(run_modules.values()):
         console.print("[yellow]No modules selected. Use --help to see available options.[/yellow]")
         raise typer.Exit()
 
+    # Basic validation before running
+    try:
+        config_mgr.validate(run_modules)
+    except ValueError as e:
+        console.print(f"[bold red]Config Error:[/bold red] {e}")
+        raise typer.Exit(1)
+    
     # 1. Cactus Module
-    if run_cactus:
+    if run_modules["cactus"]:
         logging.info("[bold cyan]>>> Starting Step 1: Cactus Pangenome Construction[/bold cyan]")
-        CactusRunner(str(config_path)).run_cactus()
+        CactusRunner(config).run_cactus()
 
     # 2. VG Stats & Indexing
-    if run_vg:
+    if run_modules["vg"]:
         logging.info("[bold cyan]>>> Starting Step 2: VG Stats and Indexing[/bold cyan]")
-        VgIndexStats(str(config_path)).run_vg_index_stats()
+        VgIndexStats(config).run_vg_index_stats()
 
     # 3. Annotation
-    if run_anno:
+    if run_modules["annotation"]:
         logging.info("[bold cyan]>>> Starting Step 3: Annotation[/bold cyan]")
-        AnnotationRunner(str(config_path)).run_annotation()
+        AnnotationRunner(config).run_annotation()
 
     # 4. WGS Mapping
-    if run_wgs:
+    if run_modules["wgs"]:
         logging.info("[bold cyan]>>> Starting Step 4: WGS Pipeline[/bold cyan]")
-        VgWgsRunner(str(config_path)).run_wgs()
+        VgWgsRunner(config).run_wgs()
 
     # 5. Variant Calling
-    if run_call:
+    if run_modules["call"]:
         logging.info("[bold cyan]>>> Starting Step 5: Variant Calling[/bold cyan]")
-        CallVariantRunner(str(config_path)).run_vg_call()
+        CallVariantRunner(config).run_vg_call()
 
     console.print("\n[bold green]Pipeline execution finished successfully![/bold green] :rocket:")
 

@@ -2,14 +2,12 @@ import logging
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-import tomllib
 import csv
 import subprocess
 
 class VgWgsRunner:
-    def __init__(self, config_path: str):
-        with open(config_path, 'rb') as f:
-            self.config = tomllib.load(f)
+    def __init__(self, config: dict):
+        self.config = config
 
         self.Global:dict = self.config['Global']
         self.wgs: dict = self.config['wgs']

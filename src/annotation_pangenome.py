@@ -1,13 +1,11 @@
 import logging
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
 class AnnotationRunner:
-    def __init__(self, config_path: str):
-        with open(config_path, 'rb') as f:
-            self.config: dict = tomllib.load(f)
+    def __init__(self, config: dict):
+        self.config: dict = config
         self.annotation: dict = self.config['Annotation']
         self.Global: dict = self.config['Global']
         self.gff3: str = self.annotation['gff3']

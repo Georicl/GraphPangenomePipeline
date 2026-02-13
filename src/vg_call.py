@@ -1,14 +1,12 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 import logging
-import tomllib
 import subprocess
 import sys
 
 class CallVariantRunner:
-    def __init__(self, config_path: str):
-        with open(config_path, "rb") as f:
-            self.config = tomllib.load(f)
+    def __init__(self, config: dict):
+        self.config = config
 
         # [Global]
         self.work_dir: Path = Path(self.config['Global']['work_dir']).resolve()

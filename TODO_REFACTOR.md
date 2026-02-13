@@ -5,7 +5,7 @@ Enable the pipeline to be driven primarily by a `config.toml` file while allowin
 
 ## 2. Architecture Design
 
-### 2.1 Configuration Manager (`src/config_manager.py`)
+### 2.1 Configuration Manager (`src/config_loader.py`)
 - Responsible for loading the base TOML configuration.
 - Merges CLI-provided options into the configuration dictionary.
 - Provides a unified object to all Runner classes.
@@ -20,19 +20,19 @@ Enable the pipeline to be driven primarily by a `config.toml` file while allowin
     - `--work-dir` (Overrides `[Global] work_dir`)
     - `--threads` (Overrides threads in `[VgIndex]`, `[wgs]`, `[call]`)
     - `--reference` (Overrides `[Cactus] reference`)
-    - `--sample-file` (Overrides `[Cactus] seqFile` or `[wgs] DataTable`)
+    - `--seq-file` (Overrides `[Cactus] seqFile`)
 
 ## 3. Implementation Steps
 
-1.  **[ ] Step 1: Create `ConfigManager`**
+1.  **[x] Step 1: Create `ConfigManager`**
     - Implement a deep-merge utility for the nested TOML structure.
     - Define a mapping between CLI flags and TOML keys.
 
-2.  **[ ] Step 2: Refactor `src/` Runners**
+2.  **[x] Step 2: Refactor `src/` Runners**
     - Update `run_minicactus.py`, `vg_stats_index.py`, `annotation_pangenome.py`, `vg_wgs.py`, and `vg_call.py`.
     - Ensure they no longer open the config file themselves.
 
-3.  **[ ] Step 3: Update `main.py`**
+3.  **[x] Step 3: Update `main.py`**
     - Add the new CLI options.
     - Integrate the `ConfigManager` to prepare the `final_config` before calling runners.
 

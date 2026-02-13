@@ -1,12 +1,10 @@
-import tomllib
 import subprocess
 from pathlib import Path
 import logging
 
 class VgIndexStats:
-    def __init__(self, config_path: str):
-        with open(config_path, 'rb') as f:
-            self.config = tomllib.load(f)
+    def __init__(self, config: dict):
+        self.config = config
         self.Global = self.config['Global']
         self.work_dir = Path(self.Global['work_dir']).resolve()
         self.VgStats = self.config['VgStats']

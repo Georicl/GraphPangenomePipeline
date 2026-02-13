@@ -1,6 +1,5 @@
 import logging
 import sys
-import tomllib
 import subprocess
 import shlex
 from pathlib import Path
@@ -11,9 +10,8 @@ class CactusRunner:
     Minigraph-Cactus runner
     Use Cactus to assembly pangenome graph
     """
-    def __init__(self, config_path: str):
-        with open(config_path, "rb") as f:
-            self.config = tomllib.load(f)
+    def __init__(self, config: dict):
+        self.config: dict = config
         # config include seqFile path and jobStore path
         self.Cactus: dict = self.config['Cactus']
         # work directory path
@@ -84,5 +82,6 @@ class CactusRunner:
             sys.exit(1)
 
 if __name__ == '__main__':
-    cactus_run_code = CactusRunner('../config/config.toml')
+    config_dict = {}
+    cactus_run_code = CactusRunner(config_dict)
     cactus_run_code.run_cactus()

@@ -27,3 +27,11 @@ coverage
 *.bundle
 *.log
 *.dSYM
+# Python bytecode
+**/__pycache__/
+*.pyc
+
+# Large test data
+test/data/reads/
+work/
+
