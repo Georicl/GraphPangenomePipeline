@@ -128,14 +128,6 @@ def run(
     
     config = config_mgr.get_config()
     
-    # Basic validation before running
-    try:
-        config_mgr.validate()
-    except ValueError as e:
-        console.print(f"[bold red]Config Error:[/bold red] {e}")
-        raise typer.Exit(1)
-
-    
     # Logic to determine which modules to run
     run_modules = {
         "cactus": cactus or all,
