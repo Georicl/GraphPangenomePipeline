@@ -36,9 +36,10 @@ Enable the pipeline to be driven primarily by a `config.toml` file while allowin
     - Add the new CLI options.
     - Integrate the `ConfigManager` to prepare the `final_config` before calling runners.
 
-4.  **[ ] Step 4: Verification**
+4.  **[x] Step 4: Verification**
     - Test running with just a config file.
     - Test running with a config file + CLI overrides (e.g., `python main.py run -c config.toml --threads 16`).
+    - Implemented `main.py check` for environment validation.
 
 ## 4. Example Usage Pattern
 ```bash

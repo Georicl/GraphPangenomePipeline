@@ -94,3 +94,14 @@ class AnnotationRunner:
             except subprocess.CalledProcessError as e:
                 logging.error(f"grannot error: {e.returncode}")
                 sys.exit(1)
+
+if __name__ == "__main__":
+    from src.config_loader import ConfigManager
+    import sys
+    
+    logging.basicConfig(level=logging.INFO)
+    # This is mainly for local testing
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "config/config.toml"
+    cfg = ConfigManager(config_path).get_config()
+    runner = AnnotationRunner(cfg)
+    runner.run_annotation()

@@ -184,12 +184,51 @@ def run(
 
 @app.command()
 def check(
-    config: Optional[str] = typer.Option(None, "--config", "-c", help="Check config file and environment")
+    config_file: Optional[str] = typer.Option(
+        None, "--config", "-c", 
+        help="Path to a custom config.toml file to check.",
+        rich_help_panel="Base Configuration",
+        show_default=False
+    )
 ):
     """
-    [Future Work] Check the environment and configuration validity.
+    Check the environment and configuration validity.
     """
-    console.print("[yellow]Environment check module is under development...[/yellow]")
+    setup_logging()
+    
+    # Determine config path
+    if config_file:
+        actual_config_path = Path(config_file)
+    else:
+        actual_config_path = Path(__file__).parent / "config" / "config.toml"
+    
+    console.print(f"[bold cyan]Checking configuration file:[/bold cyan] {actual_config_path}")
+    
+    if not actual_config_path.exists():
+        console.print(f"[bold red]Error:[/bold red] Config file not found at {actual_config_path}")
+        raise typer.Exit(1)
+        
+    try:
+        config_mgr = ConfigManager(str(actual_config_path))
+        config = config_mgr.get_config()
+        console.print("[green]✓ Configuration loaded and merged successfully.[/green]")
+        
+        # Check for required tools
+        tools = ["cactus-pangenome", "vg", "grannot", "singularity"]
+        console.print("\n[bold cyan]Checking for required tools in PATH:[/bold cyan]")
+        for tool in tools:
+            import shutil
+            path = shutil.which(tool)
+            if path:
+                console.print(f"[green]✓ {tool:20}[/green] found at {path}")
+            else:
+                console.print(f"[yellow]! {tool:20}[/yellow] [bold yellow]not found[/bold yellow] (ensure it is in your PATH or provided via singularity)")
+        
+        console.print("\n[bold green]Configuration check completed.[/bold green]")
+        
+    except Exception as e:
+        console.print(f"[bold red]Error during check:[/bold red] {e}")
+        raise typer.Exit(1)
 
 if __name__ == "__main__":
     app()

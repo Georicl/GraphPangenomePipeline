@@ -75,6 +75,12 @@ class CallVariantRunner:
                     logging.error(f">>> Sample {pack_file.name} crashed with exception: {e}")
 
 if __name__ == "__main__":
+    from src.config_loader import ConfigManager
+    import sys
+    
     logging.basicConfig(level=logging.INFO)
-    runner = CallVariantRunner("../config/config.toml")
+    # This is mainly for local testing
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "config/config.toml"
+    cfg = ConfigManager(config_path).get_config()
+    runner = CallVariantRunner(cfg)
     runner.run_vg_call()
