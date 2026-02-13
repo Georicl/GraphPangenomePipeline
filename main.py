@@ -75,6 +75,10 @@ def run(
     wgs_data: Optional[str] = typer.Option(None, "--wgs-data", help="DataTable CSV for WGS", rich_help_panel="WGS Mapping Settings"),
     wgs_threads: Optional[int] = typer.Option(None, "--wgs-threads", help="Threads per sample in WGS", rich_help_panel="WGS Mapping Settings"),
     wgs_parallel: Optional[int] = typer.Option(None, "--wgs-parallel", help="Parallel samples in WGS", rich_help_panel="WGS Mapping Settings"),
+
+    # [call] Overrides
+    call_threads: Optional[int] = typer.Option(None, "--call-threads", help="Threads per sample in variant calling", rich_help_panel="Variant Calling Settings"),
+    call_parallel: Optional[int] = typer.Option(None, "--call-parallel", help="Parallel samples in variant calling", rich_help_panel="Variant Calling Settings"),
 ):
     """
     Run the pipeline. Parameters provided via CLI will override those in the config file.
@@ -91,6 +95,7 @@ def run(
         "VgIndex": {},
         "Annotation": {},
         "wgs": {},
+        "call": {},
     }
     
     # Mapping CLI to Dict
@@ -111,6 +116,9 @@ def run(
     if wgs_data: overrides["wgs"]["DataTable"] = wgs_data
     if wgs_threads: overrides["wgs"]["Threads"] = wgs_threads
     if wgs_parallel: overrides["wgs"]["Parallel_job"] = wgs_parallel
+
+    if call_threads: overrides["call"]["Threads"] = call_threads
+    if call_parallel: overrides["call"]["Parallel_job"] = call_parallel
 
     # Clean empty sections in overrides
     overrides = {k: v for k, v in overrides.items() if v}
