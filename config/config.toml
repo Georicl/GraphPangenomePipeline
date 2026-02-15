@@ -55,3 +55,10 @@ MinMapQ = 0
 [call]
 Threads = 8
 Parallel_job = 1
+
+# ---rna-seq config---
+[rna]
+gff3 = ""
+DataTable = ""
+Threads = 8
+Parallel_job = 1

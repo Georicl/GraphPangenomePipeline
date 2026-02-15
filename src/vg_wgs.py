@@ -1,5 +1,4 @@
 import logging
-import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 import csv
