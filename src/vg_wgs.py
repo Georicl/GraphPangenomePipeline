@@ -1,45 +1,23 @@
 import logging
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from operator import truediv
 from pathlib import Path
-import csv
-import subprocess
+from src.base_runner import BaseRunner
 
-class VgWgsRunner:
+class VgWgsRunner(BaseRunner):
     def __init__(self, config: dict):
-        self.config = config
+        # 继承 BaseRunner，自动设置 wgs_dir 等路径
+        super().__init__(config, section_name="wgs")
+        self.wgs = self.section
 
-        self.Global:dict = self.config['Global']
-        self.wgs: dict = self.config['wgs']
-
-        self.work_dir = Path(self.Global['work_dir']).resolve()
-        self.threads = self.wgs['Threads']
-        # import vg index file
-        self.vg_index = self.work_dir / "3.vg_index"
-        self.vg_wgs_output = self.work_dir / "5.wgs_analysis"
-        # vg autoindex output file
-        self.gbz_file = self.vg_index / "vg_index.giraffe.gbz"
-        self.dist_file = self.vg_index / "vg_index.dist"
-        self.min_file = self.vg_index / "vg_index.shortread.withzip.min"
-
-    def parser_csv(self) -> list:
-        """Parse the csv file and output each line as a list"""
-        samples = []
-        try:
-            with open(self.wgs['DataTable'], 'r', newline='') as f:
-                reader = csv.DictReader(f, skipinitialspace=True)
-                for row in reader:
-                    if 'SampleID' not in row or 'R1' not in row:
-                        logging.warning(f"Skipping row (missing SampleID or R1)")
-                        continue
-                    samples.append(row)
-        except Exception as e:
-            logging.error(f"Error parsing CSV: {e}")
-            sys.exit(1)
-        return samples
+    def _find_index(self, suffix: str) -> Path:
+        """根据后缀在 wgs_dir 中动态查找文件"""
+        matches = [f for f in self.wgs_dir.iterdir() if f.name.endswith(suffix)]
+        if not matches:
+            raise FileNotFoundError(f"Missing index file ending with '{suffix}' in {self.wgs_dir}")
+        return matches[0]
 
     def single_sample_process(self, sample_info: dict) -> bool:
-        """single sample map process"""
-
+        """单个样本的比对和 Pack 流程"""
         sample_id = sample_info['SampleID']
         r1 = sample_info['R1']
         r2 = sample_info.get('R2')
@@ -47,20 +25,20 @@ class VgWgsRunner:
         if r2 and not r2.strip():
             r2 = None
 
-        # create sample directory
-        sample_dir = self.vg_wgs_output / sample_id
+        # 创建样本专用目录（在 5.wgs_analysis 下）
+        sample_dir = self.wgs_dir / sample_id
         sample_dir.mkdir(parents=True, exist_ok=True)
 
-        # file name
+        # 文件定义
         gam_file = sample_dir / f"{sample_id}.gam"
         pack_file = sample_dir / f"{sample_id}.pack"
 
-        # step1. vg giraffe map wgs data
+        # 1. vg giraffe 比对 (标准输出重定向到 .gam)
         giraffe_cmd = [
             "vg", "giraffe",
-            "--gbz-name", str(self.gbz_file),
-            "--minimizer-name", str(self.min_file),
-            "--dist-name", str(self.dist_file),
+            "--gbz-name", str(self.gbz_file.resolve()),
+            "--minimizer-name", str(self.min_file.resolve()),
+            "--dist-name", str(self.dist_file.resolve()),
             "--threads", str(self.threads),
             "--output-format", "gam",
             "--fastq-in", r1,
@@ -68,78 +46,60 @@ class VgWgsRunner:
         if r2:
             giraffe_cmd.extend(["--fastq-in", r2])
 
-        logging.info(f"starting Mapping [{sample_id}, directory: {sample_dir}, command: {giraffe_cmd}]")
-        try:
-            with open(gam_file, "w") as w:
-                subprocess.run(giraffe_cmd, stdout=w, check=True, stderr=subprocess.PIPE, cwd=sample_dir)
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Sample: [{sample_id}] giraffe error: {e.returncode}")
+        logging.info(f"Sample [{sample_id}]: Starting Mapping...")
+        if not self.run_command(giraffe_cmd, cwd=sample_dir, stdout_file=gam_file, label=f"giraffe-{sample_id}"):
             return False
 
-        # step2. vg pack gam file
+        # 2. vg pack 压缩
         pack_cmd = [
             "vg", "pack",
-            "--gam", str(gam_file),
-            "--xg", str(self.gbz_file),
-            "--packs-out", str(pack_file),
+            "--gam", str(gam_file.resolve()),
+            "--xg", str(self.gbz_file.resolve()),
+            "--packs-out", str(pack_file.resolve()),
             "--threads", str(self.threads),
-            "--min-mapq", str(self.wgs['MinMapQ'])
+            "--min-mapq", str(self.wgs.get('MinMapQ', 0))
         ]
 
-        logging.info(f"starting Packing [{gam_file}, directory: {sample_dir}, command: {pack_cmd}]")
-        try:
-            subprocess.run(pack_cmd, check=True, stderr=subprocess.PIPE, cwd=sample_dir)
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Pack file: [{gam_file}] pack error: {e.returncode}")
-            return False
-
-        # clean gam file
-        if pack_file.exists() and pack_file.stat().st_size > 0:
-            logging.info(f"[{sample_id}] Mapping & Packing done. Removing intermediate GAM file.")
-            gam_file.unlink(missing_ok=True)
-        else:
-            logging.warning(f"[{sample_id}] Pack file missing or empty. Keeping GAM file for debugging.")
+        logging.info(f"Sample [{sample_id}]: Starting Packing...")
+        if not self.run_command(pack_cmd, cwd=sample_dir, label=f"pack-{sample_id}"):
             return False
 
         return True
 
     def run_wgs(self):
-        """run vg wgs analysis pipeline"""
-        if not self.gbz_file.exists():
-            logging.error(f"[{self.gbz_file}] does not exist. Please run vg autoindex first.")
+        """执行完整的 WGS 分析流程"""
+        # A. 确保索引存在
+        logging.info("Step 1: Checking/Building VG Giraffe Index...")
+        if not self.run_autoindex("giraffe"):
+            logging.error("VG Autoindex failed. Aborting.")
             sys.exit(1)
 
+        # B. 动态加载索引文件路径
+        try:
+            self.gbz_file = self._find_index(".gbz")
+            self.dist_file = self._find_index(".dist")
+            self.min_file = self._find_index(".min")
+            logging.info(f"Using GBZ: {self.gbz_file.name}")
+        except FileNotFoundError as e:
+            logging.error(e)
+            sys.exit(1)
+
+        # C. 解析样本
         samples = self.parser_csv()
         if not samples:
-            logging.error("No samples found in the CSV file.")
+            logging.error("No valid samples found in DataTable.")
             sys.exit(1)
 
-        parallel_job = self.wgs.get('Parallel_job', 1)
-        logging.info(f"Starting WGS analysis with {parallel_job} parallel jobs.")
-
-        with ProcessPoolExecutor(max_workers=parallel_job) as executor:
-            future_to_sample = {
-                executor.submit(self.single_sample_process, sample_info)
-                : sample_info
-                for sample_info in samples
-            }
-
-            for future in as_completed(future_to_sample):
-                sample_id = future_to_sample[future]
-                try:
-                    success = future.result()
-                    status = "SUCCESS" if success else "FAILED"
-                    logging.info(f">>> Sample {sample_id}: Pipeline {status}")
-                except Exception as e:
-                    logging.error(f">>> Sample {sample_id} crashed with exception: {e}")
+        # D. 并行执行 (调用父类通用并行器)
+        self.run_parallel(samples, self.single_sample_process, label="WGS Pipeline")
 
 if __name__ == "__main__":
     from src.config_loader import ConfigManager
     import sys
     
-    logging.basicConfig(level=logging.INFO)
-    # This is mainly for local testing
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     config_path = sys.argv[1] if len(sys.argv) > 1 else "config/config.toml"
     cfg = ConfigManager(config_path).get_config()
+    
     runner = VgWgsRunner(cfg)
     runner.run_wgs()

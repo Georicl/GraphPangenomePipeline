@@ -1,107 +1,85 @@
 import logging
-import subprocess
 import sys
 from pathlib import Path
+from src.base_runner import BaseRunner
 
-class AnnotationRunner:
+class AnnotationRunner(BaseRunner):
     def __init__(self, config: dict):
-        self.config: dict = config
-        self.annotation: dict = self.config['Annotation']
-        self.Global: dict = self.config['Global']
-        self.gff3: str = self.annotation['gff3']
-        self.work_dir: Path= Path(self.Global['work_dir']).resolve()
-        # gfa file(full)
-        self.gfa_file: Path= self.work_dir / "1.cactus" / f"{self.Global['filePrefix']}.full.gfa"
-        # annot dir
-        self.anno_dir: Path = self.work_dir / "4.annotation"
-
-
-    # 使用grannot进行注释, 需要的是拼接基因组路径, 找到seqfile的基因组, 还有基因组注释文件, 然后输入
-
-    # def _genome_path(self) -> str:
-    #     seq_map = {}
-    #     with open(self.config['Cactus']['seqFile'], 'r') as f:
-    #         for line in f:
-    #             line = line.strip()
-    #             parts = line.split()
-    #             seq_map[parts[0]] = parts[1]
-    #     return seq_map[self.annotation['SourceGenome']]
+        # 继承 BaseRunner，自动设置 annotation_dir (对应父类的 self.annotation_dir)
+        super().__init__(config, section_name="Annotation")
+        self.annotation = self.section
+        self.gff3 = self.annotation.get('gff3')
+        # gfa file (使用父类统一管理的路径)
+        self.gfa_file = self.cactus_dir / f"{self.Global.get('filePrefix')}.full.gfa"
 
     def _grannot_gaf_command(self) -> list:
         return [
             "grannot",
-            str(self.gfa_file),
-            str(self.gff3),
-            str(self.annotation['SourceGenome']),
+            str(self.gfa_file.resolve()),
+            str(Path(self.gff3).resolve()),
+            str(self.annotation.get('SourceGenome', 'reference')),
             "-gaf",
             "-o",
-            str(self.anno_dir.resolve())
+            str(self.annotation_dir.resolve())
         ]
 
-    def _grannot_ann_command(self):
+    def _grannot_ann_command(self) -> list:
         cmd = [
             "grannot",
-            str(self.gfa_file),
-            str(self.gff3),
-            str(self.annotation['SourceGenome']),
+            str(self.gfa_file.resolve()),
+            str(Path(self.gff3).resolve()),
+            str(self.annotation.get('SourceGenome', 'reference')),
             "--outdir",
-            str(self.anno_dir.resolve())
+            str(self.annotation_dir.resolve())
         ]
+        # 合并自定义参数
         anno_options = self.config.get('ann', {})
         for key, value in anno_options.items():
             if value == "" or value is None:
                 continue
-            # add the flag name to the command
             flag_name = f"--{key}"
-
             if isinstance(value, bool):
-                # if the option value is a boolean, add the flag name without a value
                 if value:
                     cmd.append(flag_name)
             else:
                 cmd.extend([flag_name, str(value)])
-
         return cmd
 
     def run_annotation(self) -> None:
-        # create annotation dir
-        self.anno_dir.mkdir(parents=True, exist_ok=True)
+        """运行 Grannot 注释流程"""
+        # 确保 GFA 文件已解压
+        self._ensure_decompressed(self.gfa_file)
+        self.annotation_dir.mkdir(parents=True, exist_ok=True)
+
         gaf_cmd = self._grannot_gaf_command()
         ann_cmd = self._grannot_ann_command()
 
-        # use singularity to run Grannot
+        # Singularity 容器化封装
         singularity_image = self.annotation.get('singularityImage')
         if singularity_image:
-            sin_cmd = ["singularity", "exec", str(singularity_image)]
-            gaf_cmd = sin_cmd + gaf_cmd
-            ann_cmd = sin_cmd + ann_cmd
+            sin_prefix = ["singularity", "exec", str(singularity_image)]
+            gaf_cmd = sin_prefix + gaf_cmd
+            ann_cmd = sin_prefix + ann_cmd
 
-        # run grannot
-        if self.config['Gaf'].get('Gaf'):
-            logging.info("Start running grannot generate gaf annotation file")
-            try:
-                subprocess.run(gaf_cmd, capture_output=False, check=True, text=True)
-                logging.info("finish.")
-            except subprocess.CalledProcessError as e:
-                logging.error(f"grannot error: {e.returncode}")
+        # 1. 生成 GAF
+        if self.config.get('Gaf', {}).get('Gaf'):
+            logging.info("Starting Grannot: Generating GAF annotation file...")
+            if not self.run_command(gaf_cmd, cwd=self.annotation_dir, label="grannot-gaf"):
                 sys.exit(1)
 
-        if self.config['ann'].get('annotation'):
-            logging.info("Start running grannot generate target annotation file")
-            try:
-                subprocess.run(ann_cmd, capture_output=False, check=True, text=True)
-                logging.info("finish.")
-            except subprocess.CalledProcessError as e:
-                logging.error(f"grannot error: {e.returncode}")
+        # 2. 生成 Target Annotation (PAV 矩阵等)
+        if self.config.get('ann', {}).get('annotation'):
+            logging.info("Starting Grannot: Generating target annotation file...")
+            if not self.run_command(ann_cmd, cwd=self.annotation_dir, label="grannot-ann"):
                 sys.exit(1)
 
 if __name__ == "__main__":
     from src.config_loader import ConfigManager
     import sys
     
-    logging.basicConfig(level=logging.INFO)
-    # This is mainly for local testing
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     config_path = sys.argv[1] if len(sys.argv) > 1 else "config/config.toml"
     cfg = ConfigManager(config_path).get_config()
+    
     runner = AnnotationRunner(cfg)
     runner.run_annotation()

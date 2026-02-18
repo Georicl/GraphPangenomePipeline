@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from src.run_minicactus import CactusRunner
-from src.vg_stats_index import VgIndexStats
+from src.vg_stats import VgIndexStats
 from src.annotation_pangenome import AnnotationRunner
 from src.vg_wgs import VgWgsRunner
 from src.vg_call import CallVariantRunner

@@ -36,12 +36,12 @@ Enable the pipeline to be driven primarily by a `config.toml` file while allowin
     - Add the new CLI options.
     - Integrate the `ConfigManager` to prepare the `final_config` before calling runners.
 
-4.  **[x] Step 4: Verification**
-    - Test running with just a config file.
-    - Test running with a config file + CLI overrides (e.g., `python main.py run -c config.toml --threads 16`).
-    - Implemented `main.py check` for environment validation.
+4.  **[ ] Step 5: On-demand Indexing (Lazy Loading)**
+    - Implement "check-before-build" logic in `BaseRunner.run_autoindex`.
+    - If `{workflow}_index.{workflow}.gbz` exists, skip the build and return `True`.
+    - Integrated this into `VgWgsRunner` and `RnaSeqRunner` so users don't have to manually run the indexing step if it's already done.
 
-## 4. Example Usage Pattern
+## 5. Example Usage Pattern
 ```bash
 # Use defaults from config.toml
 python main.py run --config config/config.toml --all

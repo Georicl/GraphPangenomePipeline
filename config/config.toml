@@ -3,7 +3,6 @@
 work_dir = "./work"
 filePrefix = "ocu"
 
-
 # ---Cactus Config---
 # cactus path config
 [Cactus]
@@ -62,3 +61,4 @@ gff3 = ""
 DataTable = ""
 Threads = 8
 Parallel_job = 1
+tmp = ""

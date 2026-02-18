@@ -1,93 +1,72 @@
 import logging
-import sys
-import subprocess
 import shlex
 from pathlib import Path
+from src.base_runner import BaseRunner
 
-
-class CactusRunner:
+class CactusRunner(BaseRunner):
     """
     Minigraph-Cactus runner
-    Use Cactus to assembly pangenome graph
+    Use Cactus to assemble pangenome graph
     """
     def __init__(self, config: dict):
-        self.config: dict = config
-        # config include seqFile path and jobStore path
-        self.Cactus: dict = self.config['Cactus']
-        # work directory path
-        self.Global: dict = self.config['Global']
-        # set cactus output file format
-        self.CactusOutFormat:  dict = self.config['CactusOutFormat']
-
-    def generate_cactus_dir(self) -> Path:
-        """
-        create cactus work dir path
-        :return: cactus_path
-        """
-        work_dir = Path(self.Global['work_dir']).resolve()
-        cactus_dir = work_dir / "1.cactus"
-
-        return cactus_dir
+        # 继承 BaseRunner，自动设置 cactus_dir
+        super().__init__(config, section_name="Cactus")
+        self.Cactus = self.section
+        self.CactusOutFormat = self.config.get('CactusOutFormat', {})
 
     def _cactus_command(self) -> list:
         """
-        generate run command
-        cactus jobStore will use the new directory which created by generate_cactus_dir
-        :return: cmd
+        生成 cactus-pangenome 运行命令
         """
-        # use generate_cactus_dir object to create cactus directory
-        cactus_dir = self.generate_cactus_dir()
-
-        cactus_dir.mkdir(parents=True, exist_ok=True)
-        cactus_job_store = cactus_dir / "jobStore"
+        self.cactus_dir.mkdir(parents=True, exist_ok=True)
+        cactus_job_store = self.cactus_dir / "jobStore"
 
         cmd = [
             "cactus-pangenome",
-            str(cactus_job_store),
-            str(self.Cactus['seqFile']),
-            "--outDir", str(cactus_dir),
-            "--outName", str(self.Global['filePrefix']),
-            "--maxCores", str(self.Cactus['maxCores']),
-            '--reference', str(self.Cactus['reference']),
+            str(cactus_job_store.resolve()),
+            str(Path(self.Cactus.get('seqFile')).resolve()),
+            "--outDir", str(self.cactus_dir.resolve()),
+            "--outName", str(self.Global.get('filePrefix')),
+            "--maxCores", str(self.Cactus.get('maxCores', 8)),
+            "--reference", str(self.Cactus.get('reference')),
         ]
 
+        # 设置输出格式
         if self.CactusOutFormat.get('vcf'): cmd.extend(shlex.split('--vcf full'))
         if self.CactusOutFormat.get('gfa'): cmd.extend(shlex.split('--gfa full'))
         if self.CactusOutFormat.get('gbz'): cmd.extend(shlex.split('--gbz full'))
-        singularity_image = self.Cactus['singularityImage']
+
+        # Singularity 容器化
+        singularity_image = self.Cactus.get('singularityImage')
         if singularity_image and singularity_image != "":
             logging.info(f"Using Singularity image: {singularity_image}")
-            prefix_cmd = ["singularity", "exec", str(singularity_image)]
-            cmd = prefix_cmd + cmd
+            cmd = ["singularity", "exec", str(singularity_image)] + cmd
+            
         return cmd
 
     def run_cactus(self) -> None:
-        """
-        run cactus
-        :return:
-        """
-        if not Path(self.Cactus['seqFile']).exists():
-            logging.error(f"seqFile can not found: {self.Cactus['seqFile']}! Cactus need a seqFile to build graph "
-                          f"pangenome.")
+        """运行 Cactus"""
+        seq_file = Path(self.Cactus.get('seqFile'))
+        if not seq_file.exists():
+            logging.error(f"seqFile not found: {seq_file}! Cactus needs a seqFile to build graph pangenome.")
             sys.exit(1)
 
         cactus_cmd = self._cactus_command()
-        logging.info(f"Start running cactus-pangenome: {' '.join(cactus_cmd)}")
-
-        try:
-            subprocess.run(cactus_cmd, capture_output=False, check=True, text=True)
-            logging.info(f"cactus-pangenome finished")
-        except subprocess.CalledProcessError as e:
-            logging.error(f"cactus-pangenome error: {e.returncode}")
+        logging.info("Starting Cactus pangenome assembly...")
+        
+        # 使用父类统一的运行工具
+        if not self.run_command(cactus_cmd, cwd=self.cactus_dir, label="cactus"):
             sys.exit(1)
+        
+        logging.info("Cactus-pangenome pipeline finished successfully.")
 
 if __name__ == '__main__':
     from src.config_loader import ConfigManager
     import sys
     
-    logging.basicConfig(level=logging.INFO)
-    # This is mainly for local testing
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     config_path = sys.argv[1] if len(sys.argv) > 1 else "config/config.toml"
     cfg = ConfigManager(config_path).get_config()
-    cactus_run_code = CactusRunner(cfg)
-    cactus_run_code.run_cactus()
+    
+    runner = CactusRunner(cfg)
+    runner.run_cactus()
