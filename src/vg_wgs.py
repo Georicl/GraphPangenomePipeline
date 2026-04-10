@@ -1,5 +1,4 @@
 import logging
-from operator import truediv
 from pathlib import Path
 from src.base_runner import BaseRunner
 
