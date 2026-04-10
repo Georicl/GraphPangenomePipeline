@@ -67,18 +67,18 @@ genomeC /path/to/genomeC.fasta
 
 3.运行管道  
 ```bash
-python main.py --config config.toml --all # 运行全流程
+python main.py run --config config.toml --all # 运行全流程
 # 或者独立运行某个模块
-python main.py --config config.toml --cactus-pangenome # 运行构建
-python main.py --config config.toml --vg # 运行统计与索引
-python main.py --config config.toml --annotation # 运行注释
-python main.py --config config.toml --wgs # 运行WGS比对
+python main.py run --config config.toml --cactus-pangenome # 运行构建
+python main.py run --config config.toml --vg # 运行统计与索引
+python main.py run --config config.toml --annotation # 运行注释
+python main.py run --config config.toml --wgs # 运行WGS比对
 ```  
 
 > [!note]  
 >由于其中可能存在使用singularity运行的软件, 倘若使用常用的后台方式会导致singularity终止运行, 推荐使用`tmux`创建虚拟终端进行运行.  
 >```bash  
->tmux new -s graphPangenomePipeline 'python main.py --config config.toml -all'  
+>tmux new -s graphPangenomePipeline 'python main.py run --config config.toml -all'  
 >```  
 >此时可以通过`tmux ls`观察是否有终端在运行.  
 >运行结束后, 可以通过`tmux attach -t graphPangenomePipeline`进入终端进行查看.   
