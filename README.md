@@ -126,7 +126,7 @@ singularity容器的路径, 如果不存在可以留空为`singualrityImage = ""
 **[Annotation]**  
 为注释相关的的软件和文件设置, 当前仅支持**grannot**进行注释.    
 `gff3` 需要提供你的reference(核心基因组)的gff3文件, 输入为gff3文件的路径    
-`SourceGenome` 实际为你进行图泛构建时的使用的核心基因组, 可以等同reference的值, 输入类型为str  
+`SourceGenome` 实际为你进行图泛构建时使用的核心基因组, 可以等同reference的值, 输入类型为str  
 `singularityImage`(可选)   
 singularity容器的路径, 如果不存在可以留空为`singualrityImage = ""`或删除, 如果有指定路径, 会使用容器运行exec  
 
